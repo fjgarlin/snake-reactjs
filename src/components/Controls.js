@@ -20,6 +20,15 @@ class Controls extends Component {
                         {this.props.gamePaused ? <i className="fa fa-pause" aria-hidden="true"></i> : null }
                     </button>
                 </div>
+                {!this.props.gamePaused ?
+                    <div>
+                        <hr/>
+                        <p className="text-warning">
+                            Press <i className="fa fa-play" aria-hidden="true"></i> to start/resume the game.
+                        </p>
+                    </div> :
+                    null
+                }
             </div>
         );
     }
