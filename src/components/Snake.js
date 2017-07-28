@@ -11,6 +11,7 @@ class Snake extends Component {
         this.state = {
             board: '',
             gameStatus: false,
+            gameLoop: false,
             snakeCoords: [
                 [ Utils.random(0, this.props.boardSize) , Utils.random(0, this.props.boardSize) ]
             ],
@@ -23,10 +24,12 @@ class Snake extends Component {
     }
 
     resetGame() {
+        clearInterval(this.state.gameLoop);
         this.setState({
             board: '',
             snakeLength: 1,
             gameStatus: false,
+            gameLoop: false,
             snakeCoords: [
                 [ Utils.random(0, this.props.boardSize) , Utils.random(0, this.props.boardSize) ]
             ],
@@ -40,11 +43,21 @@ class Snake extends Component {
 
     pauseGame() {
         this.setState({ gameStatus: !this.state.gameStatus });
+        // This is goint to be the new status.
+        if (!this.state.gameStatus) {
+            const i = setInterval(this.moveSnake.bind(this), 150);
+            this.setState({ gameLoop: i });
+        }
+        else {
+            clearInterval(this.state.gameLoop);
+        }
     }
 
     _decideDirection(code) {
+        if (typeof code === 'undefined') return;
+
         // Decide direction.
-        switch (code) {
+        switch (code.keyCode) {
             case this.props.keys.left:
                 // Going up or down
                 if (this.state.currentDirection.x === 0){
@@ -124,8 +137,6 @@ class Snake extends Component {
         this.setState({
            snakeCoords: new_snake
         });
-
-        // TODO: Set timeout to move again.
     }
 
     gameOver() {
@@ -213,10 +224,13 @@ class Snake extends Component {
         return false;
     }
 
-    moveSnake(e) {
+    changeDirection(e) {
+        this._decideDirection(e);
+    }
+
+    moveSnake() {
         if (this.state.gameStatus) {
             // Game logic.
-            this._decideDirection(e.keyCode);
             this._slither(this._gotFood());
 
             // Drawing logic.
@@ -227,8 +241,6 @@ class Snake extends Component {
             // Logic: inform of collision after drawing the current state.
             this._checkCollision();
         }
-
-        //console.log(this.state);
     }
 
     getMarkup() {
@@ -237,7 +249,7 @@ class Snake extends Component {
 
     render() {
         return (
-            <div tabIndex={0} onKeyDown={this.moveSnake.bind(this)}>
+            <div tabIndex={0} onKeyDown={this.changeDirection.bind(this)}>
                 <Score length={this.state.snakeCoords.length} />
                 <div className="Snake square" dangerouslySetInnerHTML={this.getMarkup()}>
                 </div>
