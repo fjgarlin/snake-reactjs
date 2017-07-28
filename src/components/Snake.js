@@ -9,9 +9,10 @@ class Snake extends Component {
         super(props);
 
         this.state = {
+            board: '',
             gameStatus: false,
             snakeCoords: [
-                [ Utils.random(0, this.props.xSize) , Utils.random(0, this.props.ySize) ]
+                [ Utils.random(0, this.props.boardSize) , Utils.random(0, this.props.boardSize) ]
             ],
             foodCoords: [],
             currentDirection: {
@@ -19,16 +20,15 @@ class Snake extends Component {
                 y: 0
             }
         };
-
-        console.log(this.state);
     }
 
     resetGame() {
         this.setState({
+            board: '',
             snakeLength: 1,
             gameStatus: false,
             snakeCoords: [
-                [ Utils.random(0, this.props.xSize) , Utils.random(0, this.props.ySize) ]
+                [ Utils.random(0, this.props.boardSize) , Utils.random(0, this.props.boardSize) ]
             ],
             foodCoords: [],
             currentDirection: {
@@ -100,8 +100,8 @@ class Snake extends Component {
         if (new_snake.length === 1) {
             const grow_index = grow ? 1 : 0;
             new_snake[grow_index] = [
-                (new_snake[0][0] + this.state.currentDirection.x) % this.props.xSize,
-                (new_snake[0][1] + this.state.currentDirection.y) % this.props.ySize,
+                R.mathMod(R.add(new_snake[0][0], this.state.currentDirection.x), this.props.boardSize),
+                R.mathMod(R.add(new_snake[0][1], this.state.currentDirection.y),  this.props.boardSize),
             ];
         }
         else {
@@ -113,8 +113,8 @@ class Snake extends Component {
             // Calculate new head.
             const head = new_snake[new_snake.length - 1];
             let new_head = [
-                (head[0] + this.state.currentDirection.x) % this.props.xSize,
-                (head[1] + this.state.currentDirection.y) % this.props.ySize,
+                R.mathMod((head[0] + this.state.currentDirection.x), this.props.boardSize),
+                R.mathMod((head[1] + this.state.currentDirection.y), this.props.boardSize),
             ];
 
             // Add new head.
@@ -125,8 +125,7 @@ class Snake extends Component {
            snakeCoords: new_snake
         });
 
-
-        // Set timeout to move again.
+        // TODO: Set timeout to move again.
     }
 
     gameOver() {
@@ -142,22 +141,33 @@ class Snake extends Component {
     }
 
     _drawSnake() {
-        this.state.snakeCoords.map((coord) => this._drawCell(coord, this.props.snakeColor));
+        const s = this.state.snakeCoords.map((coord) => this._drawCell(coord, this.props.snakeColor));
+        return s.join('');
     }
 
     _drawFood() {
-        this._drawCell(this.state.foodCoords, this.props.foodColor);
+        return this._drawCell(this.state.foodCoords, this.props.foodColor);
     }
 
     _drawCell(coord, color) {
-        console.log(coord);
-        console.log(color);
+        const wh = 100 / this.props.boardSize;
+        let newCell =
+            '<div style="width: ' + wh + '%; ' +
+                'height: ' + wh + '%; ' +
+                'background: ' + color + '; ' +
+                'border: 1px solid #999;' +
+                'position: absolute; ' +
+                'top: ' + coord[1]*wh + '%; ' +
+                'left: ' + coord[0]*wh + '%; ' +
+            '"></div>';
+
+        return newCell;
     }
 
     _putFood() {
         let food = null;
         let placed = false;
-        let possibilities = R.range(0, this.props.xSize * this.props.xSize - 1);
+        let possibilities = R.range(0, this.props.boardSize * this.props.boardSize - 1);
         do {
             // Random index within the existing possibilities.
             const index = Utils.random(0, possibilities.length - 1);
@@ -167,8 +177,8 @@ class Snake extends Component {
 
             // Convert to coords on the board.
             food = [
-                Math.floor(food / this.props.xSize),
-                food % this.props.xSize
+                Math.floor(food / this.props.boardSize),
+                food % this.props.boardSize
             ];
 
             // Is it part of the snake?
@@ -187,7 +197,7 @@ class Snake extends Component {
         else {
             // Is the head where the food is?
             const head = this.state.snakeCoords[this.state.snakeCoords.length - 1];
-            if (head === this.state.foodCoords) {
+            if (R.equals(head, this.state.foodCoords)) {
                 // Put food in different position.
                 this._putFood();
 
@@ -200,10 +210,6 @@ class Snake extends Component {
         return false;
     }
 
-    _cleanBoard() {
-        console.log('Clean board');
-    }
-
     moveSnake(e) {
         if (this.state.gameStatus) {
             // Game logic.
@@ -211,21 +217,26 @@ class Snake extends Component {
             this._slither(this._gotFood());
 
             // Drawing logic.
-            this._cleanBoard();
-            this._drawFood();
-            this._drawSnake();
+            const foodMarkup = this._drawFood();
+            const snakeMarkup = this._drawSnake();
+            this.setState({ board: foodMarkup + snakeMarkup });
 
             // Logic: inform of collision after drawing the current state.
             this._checkCollision();
         }
+
+        //console.log(this.state);
+    }
+
+    getMarkup() {
+        return { __html: this.state.board };
     }
 
     render() {
         return (
             <div tabIndex={0} onKeyDown={this.moveSnake.bind(this)}>
                 <Score length={this.state.snakeCoords.length} />
-                <div className="Snake square">
-
+                <div className="Snake square" dangerouslySetInnerHTML={this.getMarkup()}>
                 </div>
                 <Controls
                     gamePaused={this.state.gameStatus}
@@ -240,8 +251,7 @@ class Snake extends Component {
 Snake.defaultProps = {
     snakeColor: 'yellowgreen',
     foodColor: 'red',
-    xSize: 20,
-    ySize: 20,
+    boardSize: 20,
     keys: {
         left: 37,
         up: 38,
