@@ -11,8 +11,9 @@ class Snake extends Component {
         this.state = {
             gameStatus: false,
             snakeCoords: [
-                [ 10, 10 ]
+                [ Utils.random(0, this.props.xSize) , Utils.random(0, this.props.ySize) ]
             ],
+            foodCoords: [],
             currentDirection: {
                 x: 1,
                 y: 0
@@ -29,6 +30,7 @@ class Snake extends Component {
             snakeCoords: [
                 [ Utils.random(0, this.props.xSize) , Utils.random(0, this.props.ySize) ]
             ],
+            foodCoords: [],
             currentDirection: {
                 x: 1,
                 y: 0
@@ -143,17 +145,50 @@ class Snake extends Component {
 
     }
 
-    _gotFood() {
-        // Is the head where the food is?
-        if (Utils.random(0, 1)) {
-            // Put food in different position.
+    _drawFood() {
 
-            // And grow.
-            return true;
+    }
+
+    _putFood() {
+        let food = null;
+        let placed = false;
+        let possibilities = R.range(0, this.props.xSize * this.props.xSize - 1);
+        do {
+            const index = Utils.random(0, possibilities.length - 1);
+            food = possibilities.splice(index, 1);
+            console.log(possibilities);
+            food = [
+                Math.floor(food / this.props.xSize),
+                food % this.props.xSize
+            ];
+
+            if (R.findIndex(R.equals(food), this.state.snakeCoords) !== 1) {
+                this.setState({ foodCoords: food });
+                this._drawFood();
+                placed = true;
+            }
+        } while (!placed);
+    }
+
+    _gotFood() {
+        // Is there any food on the board?
+        if (this.state.foodCoords.length === 0) {
+            this._putFood();
+        }
+        else {
+            // Is the head where the food is?
+            const head = this.state.snakeCoords[this.state.snakeCoords.length - 1];
+            if (head === this.state.foodCoords) {
+                // Put food in different position.
+                this._putFood();
+
+                // And grow.
+                return true;
+            }
         }
 
         // No food reached.
-        return true;
+        return false;
     }
 
     moveSnake(e) {
