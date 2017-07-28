@@ -142,11 +142,16 @@ class Snake extends Component {
     }
 
     _drawSnake() {
-
+        this.state.snakeCoords.map((coord) => this._drawCell(coord, this.props.snakeColor));
     }
 
     _drawFood() {
+        this._drawCell(this.state.foodCoords, this.props.foodColor);
+    }
 
+    _drawCell(coord, color) {
+        console.log(coord);
+        console.log(color);
     }
 
     _putFood() {
@@ -154,17 +159,21 @@ class Snake extends Component {
         let placed = false;
         let possibilities = R.range(0, this.props.xSize * this.props.xSize - 1);
         do {
+            // Random index within the existing possibilities.
             const index = Utils.random(0, possibilities.length - 1);
+
+            // Take the item out so that we don't choose it again in this try.
             food = possibilities.splice(index, 1);
-            console.log(possibilities);
+
+            // Convert to coords on the board.
             food = [
                 Math.floor(food / this.props.xSize),
                 food % this.props.xSize
             ];
 
+            // Is it part of the snake?
             if (R.findIndex(R.equals(food), this.state.snakeCoords) !== 1) {
                 this.setState({ foodCoords: food });
-                this._drawFood();
                 placed = true;
             }
         } while (!placed);
@@ -191,11 +200,22 @@ class Snake extends Component {
         return false;
     }
 
+    _cleanBoard() {
+        console.log('Clean board');
+    }
+
     moveSnake(e) {
         if (this.state.gameStatus) {
+            // Game logic.
             this._decideDirection(e.keyCode);
             this._slither(this._gotFood());
+
+            // Drawing logic.
+            this._cleanBoard();
+            this._drawFood();
             this._drawSnake();
+
+            // Logic: inform of collision after drawing the current state.
             this._checkCollision();
         }
     }
@@ -218,7 +238,8 @@ class Snake extends Component {
 }
 
 Snake.defaultProps = {
-    color: 'blue',
+    snakeColor: 'yellowgreen',
+    foodColor: 'red',
     xSize: 20,
     ySize: 20,
     keys: {
