@@ -146,7 +146,10 @@ class Snake extends Component {
     }
 
     _drawFood() {
-        return this._drawCell(this.state.foodCoords, this.props.foodColor);
+        if (this.state.foodCoords.length) {
+            return this._drawCell(this.state.foodCoords, this.props.foodColor);
+        }
+        return '';
     }
 
     _drawCell(coord, color) {
